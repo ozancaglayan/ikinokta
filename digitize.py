@@ -30,13 +30,13 @@ class Dots(object):
         self.dot_list = [Dot(p) for p in points]
 
         # np array, shape <nb_of_points> x 2
-        self.mat = np.array([(d.x, d.y, d.color_id) for d in self.dot_list])
+        self.mat = np.array([(d.color_id, d.x, d.y) for d in self.dot_list])
 
         # This rounds off glitches of point coordinates on the same axis
-        self.rmat = self.mat[:, :2] / 10
+        self.rmat = self.mat[:, 1:] / 10
         self.col_vals = np.unique(self.rmat[:, 0])
         self.row_vals = np.unique(self.rmat[:, 1])
-        self.grid = np.zeros((self.col_vals.size, self.row_vals.size))
+        self.grid = np.zeros((3, self.row_vals.size, self.col_vals.size))
 
         for i, val in enumerate(self.col_vals):
             np.place(self.rmat[:,0], self.rmat[:,0] == val, i)
@@ -44,9 +44,14 @@ class Dots(object):
             np.place(self.rmat[:,1], self.rmat[:,1] == val, i)
 
         for i, pt in enumerate(self.rmat):
-            self.grid[tuple(pt)] = self.mat[i, 2]
+            self.grid[:, pt[1], pt[0]] = self.mat[i]
 
-        self.grid = self.grid.T
+        # grid[0] are colors
+        # grid[1],grid[2] Real screen coordinates
+
+    def get_random_touch_drags(self, n=2):
+        pass
+
 
     def dump(self):
         for dot in self.dot_list:
