@@ -30,12 +30,23 @@ class Dots(object):
         self.dot_list = [Dot(p) for p in points]
 
         # np array, shape <nb_of_points> x 2
-        self.mat = np.array([(d.x, d.y) for d in self.dot_list])
+        self.mat = np.array([(d.x, d.y, d.color_id) for d in self.dot_list])
 
         # This rounds off glitches of point coordinates on the same axis
-        self.rmat = self.mat / 10
-        self.cols = np.unique(self.rmat[:, 0]).size
-        self.rows = np.unique(self.rmat[:, 1]).size
+        self.rmat = self.mat[:, :2] / 10
+        self.col_vals = np.unique(self.rmat[:, 0])
+        self.row_vals = np.unique(self.rmat[:, 1])
+        self.grid = np.zeros((self.col_vals.size, self.row_vals.size))
+
+        for i, val in enumerate(self.col_vals):
+            np.place(self.rmat[:,0], self.rmat[:,0] == val, i)
+        for i, val in enumerate(self.row_vals):
+            np.place(self.rmat[:,1], self.rmat[:,1] == val, i)
+
+        for i, pt in enumerate(self.rmat):
+            self.grid[tuple(pt)] = self.mat[i, 2]
+
+        self.grid = self.grid.T
 
     def dump(self):
         for dot in self.dot_list:
@@ -44,12 +55,10 @@ class Dots(object):
 
 output = subprocess.Popen(["./contours", sys.argv[1]], stdout=subprocess.PIPE).communicate()[0]
 dots = Dots(eval(output))
-
 dots.dump()
+print dots.grid
 
-grid = np.zeros((WIDTH, HEIGHT), dtype=np.uint8)
-for dot in dots.dot_list:
-    grid[dot.x, dot.y] = dot.color_id
-
-print "%d dots. " % np.sum(grid > 0)
-print "Ideal grid size: %d x %d" % (dots.rows, dots.cols)
+#grid = np.zeros((WIDTH, HEIGHT), dtype=np.uint8)
+#for dot in dots.dot_list:
+#    grid[dot.x, dot.y] = dot.color_id
+#print "%d dots. " % np.sum(grid > 0)
